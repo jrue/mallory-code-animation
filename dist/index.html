@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>Data Visualization Example</title>
+    <style>
+        .axis text{
+            font-family: sans-serif;
+            font-size: 7px;
+        }
+        .axis path{
+            stroke-width:0.5px;
+        }
+        .axis.y .domain,
+        .axis.y .tick line{
+            opacity: 0;
+        }
+        #chartwrapper{
+            position: relative;
+            height: 2000px;
+        }
+        #chartholder{
+            position:absolute;
+            top: 0;
+            left:0;
+            bottom:auto;
+            width: 100%;
+        }
+        #chartholder svg{
+            display: block;
+            margin: 0 auto;
+            width:100vw;
+            height: 100vw;
+            overflow: hidden;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="chartwrapper">
+         <h2 class="text-center">Women in the workforce</h2>
+        <div id="chartholder">
+           <!-- Chart will go here -->
+
+
+        </div>
+    </div>
+    <script src="js/jquery-3.3.1.slim.min.js"></script>
+    <script src="js/d3.v5.min.js"></script>
+	<script>
+        
+        //initial variables
+        let squareDefaultColor   = "#516F85";
+        let squareHighlightColor = "#F9AF4C";
+        let boxSize  = 15;
+        let animationDuration = 800;
+        
+        //spacing between boxes
+        let heightGutterSpace = 30;
+        let widthGutterSpace  = 25;
+        
+        //setup the initial margins and ratio
+        let margin = {top:50,right:0,bottom:0,left:80},
+            width  = 400 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
+		
+		//setup container to hold the graphics
+        let svg = d3.select("#chartholder")
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("preserveAspectRatio", "xMidYMin")
+            .attr("viewBox", "0 0 " + (width + margin.left + margin.right) + " " + 
+                  (height + margin.top + margin.bottom));
+        
+        //switches
+        let makeBarChartsSwitch = false;
+        
+        let g = svg.append("g")
+            .attr("id", "squareBox")
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+        
+
+        //create empty array of 100 boxes
+        let data = new Array(100).fill({value:0, name:"", x:0, y:0});
+		
+        
+        //this is the real data, overlayed and will turn into bar chart
+        let workerData = [
+            {value: 7.2, name: "Painters/Maintenance", x: 7*widthGutterSpace, y: heightGutterSpace * 9},
+            {value: 6.4, name: "Machinsts",            x: 8*widthGutterSpace, y: heightGutterSpace * 9},
+            {value: 3.7, name: "Construction",         x: 9*widthGutterSpace, y: heightGutterSpace * 9},
+            {value: 3.5, name: "Plumbers",             x: 0, y: heightGutterSpace * 3},
+            {value: 2.4, name: "Electricians",         x: 0, y: heightGutterSpace * 4},
+            {value: 2.2, name: "Carpenters",           x: 0, y: heightGutterSpace * 5},
+            {value: 2.2, name: "Steel workers",        x: 0, y: heightGutterSpace * 6},
+            {value: 1.0, name: "Elevator installers",  x: 0, y: heightGutterSpace * 7}
+        ];
+        
+        
+        //set the scales
+        let xScale = d3.scaleLinear()
+            .domain([0, 35])
+            .range([0,width]);
+        
+        let yScale = d3.scaleBand()
+            .domain(workerData.map(function(d){ return d.name; }))
+            .rangeRound([0, 8 * heightGutterSpace])
+            .paddingInner(0)
+            .paddingOuter(0);
+        
+        
+        //create initial waffle chart
+        g.selectAll("rect.waffle")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("y", function(d,i){ return (Math.floor(i/10) % 10) * heightGutterSpace })
+            .attr("x", function(d,i){ return (i % 10) * widthGutterSpace })
+            .attr("width", boxSize)
+            .attr("height", boxSize)
+            .attr("class", "waffle")
+            .style("opacity", 1)
+            .attr("fill", function(d){ return d.value==0 ? squareDefaultColor : squareHighlightColor;});
+        
+        //create the boxes that will become a barchart and overlay them on top of waffle chart
+        var chartBoxes = g.selectAll("rect.chart")
+            .data(workerData)
+            .enter();
+        
+        //create orange boxes
+        chartBoxes.append("rect")
+            .attr("class", function(d){ return d.x > 0 ? "chart move" : "chart nomove";})
+            .attr("y", function(d){ return d.y;})
+            .attr("x", function(d){ return d.x; })
+            .attr("opacity", function(d){ return d.x > 0 ? 1 : 0;})
+            .attr("width", function(d){ return d.x > 0 ? boxSize : 0;})
+            .attr("height", boxSize)
+            .attr("fill", squareHighlightColor);
+        
+        //add text percentages for boxes, but hide them immediately
+        chartBoxes.append("text")
+            .attr("class", "labels")
+            .attr("x", 2)
+            .attr("y", function(d,i){ return (i * heightGutterSpace) + (boxSize/2) + 1})
+            .attr("text-anchor", "left")
+            .attr("alignment-baseline", "middle")
+            .style("font-size", "7px")
+            .style("fill", "black")
+            .attr("opacity", 0)
+            .text(function(d){ return d.value + "%"; });
+        
+         //if she wants an x axis
+//        svg.append("g")
+//            .attr("transform","translate(" + margin.left + "," + ((8*heightGutterSpace) + margin.top) + ")")
+//            .attr("class", "axis x")
+//            .call(d3.axisBottom(xScale))
+//            .attr("opacity", 0);
+        
+        //the labels on the left side
+        svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + (margin.top - boxSize/2) + ")")
+            .attr("class", "axis y")
+            .call(d3.axisLeft(yScale))
+            .attr("opacity", 0);
+        
+        /*
+         * Fade out waffle chart
+         *
+         * This kicks things off, and fades out waffle chart
+         * on transition end, it runs expandBarCharts() in a
+         * chain reaction.
+         */
+        function fadeOutWaffleBoxes(){
+            g.selectAll("rect.waffle")
+                .transition()
+                .duration(animationDuration)
+                .style("opacity", 0)
+                .on("end", function(){ expandBarCharts(); });//call next function
+        }
+        
+
+        /*
+         * Make the bar chart appear
+         *
+         * After the Waffle chart disappears, this will animate
+         * the bar chart open.
+         */
+        function expandBarCharts(){
+            
+            //make sure this function only runs once
+            if(makeBarChartsSwitch){return;}
+            makeBarChartsSwitch = true;
+            
+            //make all of the chart boxes visible
+            g.selectAll("rect.chart")
+                .transition()
+                .duration(animationDuration)
+                .attr("opacity", 1);
+            
+            //move three orange boxes to the top
+            g.selectAll("rect.move")
+                .each(function(d,index){
+                    d3.select(this)
+                        .transition()
+                        .duration(animationDuration)
+                        .attr("x", 0)
+                        .attr("y", function(){ return index * heightGutterSpace});
+                });
+            
+            
+            //wait for the animations to complete before finishing
+            window.setTimeout(function(){
+                
+                //make the bars grow
+                g.selectAll("rect.chart")
+                 .transition()
+                 .duration(animationDuration)
+                 .attr("width", function(d){ return xScale(d.value); });
+                
+                //show the labels
+                svg.selectAll(".axis,.labels")
+                    .transition()
+                    .duration(animationDuration)
+                    .attr("opacity", 1)
+                    .on("end", function(){ playedReady = true; });
+
+            }, animationDuration);
+        }
+        
+        
+        function resetProject(){
+            
+            makeBarChartsSwitch = false;
+            
+            //reduce the size of the bars back to boxes
+            g.selectAll("rect.chart")
+                 .transition()
+                 .duration(animationDuration)
+                 .attr("width", function(d){ return d.x > 0 ? boxSize : 0 });
+            
+            //hide all labels and axis
+            svg.selectAll(".axis,.labels")
+                    .transition()
+                    .duration(animationDuration)
+                    .attr("opacity", 0);
+            
+            //wait for animations to complete
+            window.setTimeout(function(){
+                 
+                g.selectAll("rect.chart.move")
+                    .transition()
+                    .duration(animationDuration)
+                    .attr("x", function(d){ return d.x; })
+                    .attr("y", function(d){ return d.y; });
+                
+                g.selectAll("rect.chart.nomove")
+                    .transition()
+                    .duration(animationDuration)
+                    .attr("opacity", 0);
+                 
+                g.selectAll("rect.waffle")
+                    .transition()
+                    .duration(animationDuration)
+                    .delay(animationDuration)
+                    .style("opacity", 1)
+                    .on("end", function(){ playedReady = true; })
+                
+                
+                
+            }, animationDuration);
+
+            
+        }
+        
+        //a trigger for when it's played through or not.
+        var playedThrough = false;
+        var playedReady   = true;
+        
+        jQuery(document).ready(function($){
+            
+            
+            
+           $(window).on("scroll", function(e,l){
+               
+           
+
+               if($(window).scrollTop() < $("#chartwrapper").offset().top){
+                   $("#chartholder").css({"position": "absolute", "top":0, "bottom":"auto"});
+                   if(playedThrough == true && playedReady == true){
+                          playedThrough = false;
+                          playedReady = false;
+                          resetProject();   
+                   }
+               }
+               
+               
+               if($(window).scrollTop() > $("#chartwrapper").offset().top &&
+                  $(window).scrollTop() < $("#chartwrapper").offset().top +  $("#chartwrapper").height()){
+                   $("#chartholder").css({"position":"fixed","top":0,"bottom":"auto"});
+                   
+                   if($(window).scrollTop() > $("#chartwrapper").offset().top + 500){
+                       if(playedThrough == false && playedReady == true){
+                          playedThrough = true;
+                          playedReady = false;
+                          fadeOutWaffleBoxes();
+                        }
+                   }
+               }
+               
+               if($(window).scrollTop() > $("#chartwrapper").offset().top + $("#chartwrapper").height() - $(window).height()){
+                   $("#chartholder").css({"position": "absolute", "top":"auto", "bottom":0});
+               }
+               
+           }) 
+        });
+	</script> 
+  </body>
+</html>

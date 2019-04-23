@@ -1,0 +1,6 @@
+.DS_Store
+build
+temp
+npm-debug.log
+src/js/lib/*/**
+data

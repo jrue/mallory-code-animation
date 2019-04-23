@@ -1,0 +1,28 @@
+{
+  "name": "mallory-code-animation",
+  "version": "1.0.0",
+  "description": "Bespoke chart that modifies as you scroll",
+  "main": "src/js/script.js",
+  "scripts"  : {
+    "watch"  : "nodemon -e js --ignore build/ --ignore node_modules --ignore dist -x 'npm run clean'",
+    "clean"  : "mkdir -p dist && rm -rf dist/* && npm run build",
+    "build"  : "cp -r src/* dist/",
+    "server" : "http-server dist/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jrue/mallory-code-animation.git"
+  },
+  "author": "Jeremy Rue",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jrue/mallory-code-animation/issues"
+  },
+  "homepage": "https://github.com/jrue/mallory-code-animation#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^0.11.1",
+    "nodemon": "^1.18.11",
+    "uglify-js": "^3.5.5"
+  }
+}
